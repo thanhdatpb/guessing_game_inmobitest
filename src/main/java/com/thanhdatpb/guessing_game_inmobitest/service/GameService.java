@@ -5,8 +5,10 @@ import com.thanhdatpb.guessing_game_inmobitest.entity.User;
 import com.thanhdatpb.guessing_game_inmobitest.repository.GuessHistoryRepository;
 import com.thanhdatpb.guessing_game_inmobitest.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.GetMapping;
 
 import java.util.Map;
 
@@ -16,6 +18,7 @@ public class GameService {
 
     private final UserRepository userRepository;
     private final GuessHistoryRepository historyRepository;
+
 
     @Transactional
     public Map<String, Object> guess(Long userId, int number) {
@@ -27,10 +30,8 @@ public class GameService {
             throw new RuntimeException("No turns left");
         }
 
-        // trừ turn
         user.setTurns(user.getTurns() - 1);
 
-        // logic 5% win
         boolean win = Math.random() < 0.05;
 
         boolean correct;
@@ -43,9 +44,7 @@ public class GameService {
 
         userRepository.save(user);
 
-        // lưu history
         GuessHistory history = new GuessHistory();
-        history.setUserId(userId);
         history.setGuessedNumber(number);
         history.setResult(correct);
         historyRepository.save(history);

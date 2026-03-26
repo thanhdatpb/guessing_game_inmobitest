@@ -14,7 +14,6 @@ public class GuessHistory {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private Long userId;
     private Integer guessedNumber;
     private Boolean result;
 }
