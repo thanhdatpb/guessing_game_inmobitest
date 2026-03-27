@@ -9,7 +9,7 @@ Spring Boot REST API cho bài test Inmobi.
 - Spring Security + JWT
 - Spring Data JPA
 - MySQL
-- Validate + Lombok
+- Validation + Lombok
 - Swagger / OpenAPI
 - Docker Compose
 
