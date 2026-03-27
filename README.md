@@ -112,6 +112,9 @@ Sample users in the SQL script:
 - `user1 / 123456`
 - `user2 / 123456`
 
+Database được sử dụng bằng Mysql:
+![img.png](img.png)
+
 ## Main Endpoints
 
 ### Register
