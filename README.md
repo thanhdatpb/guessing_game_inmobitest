@@ -1,4 +1,4 @@
-# Guessing Game API
+# Guessing Game_InmobiTest
 
 Spring Boot REST API cho bài test Inmobi.
 
@@ -10,7 +10,7 @@ Spring Boot REST API cho bài test Inmobi.
 - Spring Data JPA
 - MySQL
 - Validation + Lombok
-- Swagger / OpenAPI
+- Swagger / OpenAPI v3
 - Docker Compose
 
 ## Environment Variables
