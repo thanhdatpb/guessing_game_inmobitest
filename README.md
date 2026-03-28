@@ -1,196 +1,96 @@
-# Guessing Game_InmobiTest
+# Game đoán số — API Spring Boot
 
-Spring Boot REST API cho bài test Inmobi.
+Dự án REST API cho bài test Java (Inmobi): đăng ký/đăng nhập JWT, đoán số 1–5, bảng xếp hạng, mua lượt.
 
-## Tech Stack
+## Môi trường
 
-- Java 17
-- Spring Boot 4
-- Spring Security + JWT
-- Spring Data JPA
-- MySQL
-- Validation + Lombok
-- Swagger / OpenAPI v3
-- Docker Compose
+- **JDK** 17+
+- **MySQL** 8 (hoặc chỉ cần **Docker** để chạy full stack)
 
-## Environment Variables
+## Chạy nhanh
 
-The app supports these environment variables:
+### 1) MySQL sẵn trên máy
 
-- `SERVER_PORT=8080`
-- `DB_HOST=localhost`
-- `DB_PORT=3306`
-- `DB_NAME=guessing_game`
-- `DB_USERNAME=root`
-- `DB_PASSWORD=123456`
-- `JWT_SECRET=guessing-game-super-secret-key-for-jwt-2026`
-- `JWT_EXPIRATION_MS=86400000`
-- `GAME_WIN_PROBABILITY=0.05`
-- `GAME_PURCHASE_TURNS=5`
-
-## Run Locally
-
-Start MySQL first, then run:
+Tạo DB (hoặc dùng script `guessing_game_inmobitest.sql`), cấu hình biến môi trường nếu khác mặc định:
 
 ```bash
 ./mvnw spring-boot:run
 ```
 
-API base URL:
+Windows (PowerShell):
 
-```text
-http://localhost:8080
+```powershell
+.\mvnw.cmd spring-boot:run
 ```
 
-## Swagger / OpenAPI
+API: `http://localhost:8080`
 
-After the application starts:
-
-- Swagger UI: `http://localhost:8080/swagger-ui.html`
-- OpenAPI JSON: `http://localhost:8080/v3/api-docs`
-
-Public endpoints:
-
-- `POST /register`
-- `POST /login`
-- Swagger / OpenAPI endpoints
-
-Protected endpoints use Bearer JWT in the `Authorization` header.
-
-## Authentication Notes (JWT uses userId)
-
-- This project uses **JWT Bearer** authentication.
-- The token **subject (`sub`) is the `userId`**, not `username`/`email`. This makes authentication stable even if username/email changes later.
-- Register/Login still accept `username` + `password`. The database also stores an `email` field; by default it is set to the same value as `username` unless you extend the register flow.
-
-## Docker Compose
-
-Build and run the full stack:
+### 2) Docker (MySQL + app)
 
 ```bash
 docker compose up --build
 ```
 
-Minh họa chạy docker file:
-![img_1.png](img_1.png)
-
-This starts:
-
-- `mysql` on host port `3307` by default
-- `app` on host port `8080` by default
-
-If `3307` or `8080` are not suitable, override them:
+Mặc định: app `8080`, MySQL map ra host (xem `docker-compose.yml`). Đổi port nếu trùng:
 
 ```powershell
 $env:APP_HOST_PORT="8080"
-$env:MYSQL_HOST_PORT="3306"
+$env:MYSQL_HOST_PORT="3307"
 docker compose up --build
 ```
 
-Stop the stack:
+Dừng: `docker compose down` — xóa cả volume DB: `docker compose down -v`
+
+## Biến môi trường (tùy chọn)
+
+| Biến | Ý nghĩa | Mặc định gợi ý |
+|------|---------|----------------|
+| `SERVER_PORT` | Cổng HTTP | `8080` |
+| `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USERNAME`, `DB_PASSWORD` | Kết nối MySQL | `localhost`, `3306`, `guessing_game`, … |
+| `JWT_SECRET`, `JWT_EXPIRATION_MS` | Ký JWT | đặt `JWT_SECRET` mạnh khi deploy |
+| `GAME_WIN_PROBABILITY` | Xác suất “thắng” (server khớp số bạn đoán) | `0.05` (5%) |
+| `GAME_PURCHASE_TURNS` | Số lượt mỗi lần `POST /buy-turns` | `5` |
+
+## Đăng nhập và gọi API có bảo vệ
+
+1. **Đăng ký** `POST /register` — body JSON: `username`, `password` (khi lưu, `email` được gán bằng `username`).
+2. **Đăng nhập** `POST /login` — nhận `token` (JWT).
+3. Các endpoint khác: header `Authorization: Bearer <token>`.
+
+Ví dụ (sau khi có token):
 
 ```bash
-docker compose down
+curl -s -X POST http://localhost:8080/guess ^
+  -H "Authorization: Bearer TOKEN" ^
+  -H "Content-Type: application/json" ^
+  -d "{\"number\":3}"
 ```
 
-Stop and remove the database volume:
+(Bash/Linux/macOS: bỏ `^`, xuống dòng bằng `\`.)
 
-```bash
-docker compose down -v
-```
+**Swagger UI:** `http://localhost:8080/swagger-ui.html` — có thể “Authorize” bằng Bearer token rồi thử trực tiếp.
 
-## Build And Test
+## Endpoint chính
+
+| Method | Đường dẫn | Ghi chú |
+|--------|-----------|---------|
+| POST | `/register`, `/login` | Công khai |
+| POST | `/guess` | Body `{"number":1..5}`; trừ 1 lượt; đúng +1 điểm (logic xác suất theo cấu hình) |
+| POST | `/buy-turns` | Cộng lượt (mặc định +5) |
+| GET | `/leaderboard` | Top 10 theo điểm |
+| GET | `/me` | `username`, `email`, `score`, `turns` |
+
+## Build & test
 
 ```bash
 ./mvnw clean test
 ./mvnw clean package
 ```
 
-Tests run with H2 in-memory database under the `test` profile.
+Profile test dùng H2 in-memory (không cần MySQL).
 
-## Database Script
+## Cơ sở dữ liệu
 
-If you want to initialize MySQL manually, use:
+- Script mẫu: `guessing_game_inmobitest.sql`
+- User mẫu (nếu có trong script): ví dụ `dat` / `123456`
 
-```text
-guessing_game_inmobitest.sql
-```
-
-Current `users` table contains: `id, username, email, password, score, turns, created_at, updated_at`.
-
-Sample users in the SQL script:
-
-- `dat / 123456`
-- `user1 / 123456`
-- `user2 / 123456`
-
-Database được sử dụng bằng Mysql:
-![img.png](img.png)
-
-## Main Endpoints
-
-### Register
-
-```bash
-curl -X POST http://localhost:8080/register \
-  -H "Content-Type: application/json" \
-  -d "{\"username\":\"dat\",\"password\":\"123456\"}"
-```
-
-### Login
-
-```bash
-curl -X POST http://localhost:8080/login \
-  -H "Content-Type: application/json" \
-  -d "{\"username\":\"dat\",\"password\":\"123456\"}"
-```
-
-Response includes a JWT token:
-
-```json
-{
-  "token": "<JWT>",
-  "username": "dat"
-}
-```
-
-### Buy Turns
-
-```bash
-curl -X POST http://localhost:8080/buy-turns \
-  -H "Authorization: Bearer <TOKEN>"
-```
-
-### Guess
-
-```bash
-curl -X POST http://localhost:8080/guess \
-  -H "Authorization: Bearer <TOKEN>" \
-  -H "Content-Type: application/json" \
-  -d "{\"number\":3}"
-```
-
-### Leaderboard
-
-```bash
-curl http://localhost:8080/leaderboard \
-  -H "Authorization: Bearer <TOKEN>"
-```
-
-### Current User
-
-```bash
-curl http://localhost:8080/me \
-  -H "Authorization: Bearer <TOKEN>"
-```
-
-Example `/me` response:
-
-```json
-{
-  "username": "dat",
-  "email": "dat",
-  "score": 3,
-  "turns": 7
-}
-```
